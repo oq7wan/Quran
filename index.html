@@ -91,10 +91,24 @@
             border-radius: 8px;
             border: 1px solid #c8e6c9;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .date-picker-section input {
             max-width: 200px;
+        }
+
+        .display-date-banner {
+            background-color: #1b5e20;
+            color: #ffffff;
+            padding: 12px 18px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.05rem;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         table {
@@ -164,7 +178,7 @@
 
     <!-- تحديد تاريخ المعاينة -->
     <div class="date-picker-section">
-        <label for="viewDate">📅 عرض أوراد يوم:</label>
+        <label for="viewDate">📅 حدد تاريخ المعاينة:</label>
         <input type="date" id="viewDate">
     </div>
 
@@ -196,6 +210,11 @@
 
     <!-- قائمة الطلاب والأوراد -->
     <div class="card">
+        <!-- شريط يعرض التاريخ المحدد الحالي -->
+        <div class="display-date-banner" id="currentDateBanner">
+            📌 أوراد التسميع ليوم: --
+        </div>
+
         <h3>📋 الورد المطلوب للتسميع</h3>
         <table>
             <thead>
@@ -216,7 +235,6 @@
 <script>
     // -------------------------------------------------------------
     //  قائمة الطلاب الأساسية المقيدة والمثبتة داخل الموقع
-    // يمكنك تعديل أو إضافة الطلاب هنا مباشرة لكي يظهروا للجميع على GitHub!
     // -------------------------------------------------------------
     const DEFAULT_STUDENTS = [
         { id: 1, name: "أصالة", startDate: "2026-08-13", startPage: 311, pagesPerDay: 3 },
@@ -231,7 +249,6 @@
             if (saved) {
                 students = JSON.parse(saved);
             } else {
-                // إذا لم تكن هناك بيانات محفوظة محلياً، نستخدم القائمة الأساسية للموقع
                 students = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
             }
         } catch (e) {
@@ -255,10 +272,29 @@
         }
     }
 
+    function updateDateBanner(viewDateVal) {
+        const parts = viewDateVal.split('-');
+        if (parts.length === 3) {
+            const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            
+            // تنسيق التاريخ الميلادي (مثال: الخميس، 13 أغسطس 2026)
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = selectedDate.toLocaleDateString('ar-EG', options);
+            
+            // إضافة التاريخ بالصيغة الرقمية المباشرة (13/8/2026)
+            const formattedNumeric = `${parts[2]}/${parts[1]}/${parts[0]}`;
+
+            document.getElementById('currentDateBanner').innerHTML = `📌 أوراد التسميع ليوم: <strong>${dateStr}</strong> (${formattedNumeric})`;
+        }
+    }
+
     function renderStudents() {
         const tbody = document.getElementById('studentsList');
         const viewDateVal = document.getElementById('viewDate').value;
         tbody.innerHTML = '';
+
+        // تحديث نص التاريخ فوق الجدول
+        updateDateBanner(viewDateVal);
 
         if (!students || students.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#777;">لا يوجد طلاب حالياً. اضغط "استعادة القائمة الأساسية" للبدء.</td></tr>';
