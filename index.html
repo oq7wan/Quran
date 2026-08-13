@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متابع أوراد طلاب القرآن الكريم</title>
+    <style>
+        :root {
+            --primary-color: #1b5e20;
+            --secondary-color: #2e7d32;
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 { margin: 0 0 10px 0; font-size: 1.8rem; }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+        }
+
+        button.btn-add {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button.btn-add:hover {
+            background-color: var(--primary-color);
+        }
+
+        .date-picker-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #c8e6c9;
+            margin-bottom: 20px;
+        }
+
+        .date-picker-section input {
+            max-width: 200px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f1f8e9;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .badge {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .btn-delete {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: auto;
+        }
+
+        .backup-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-backup {
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            tr { margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: white; }
+            td { text-align: right; display: flex; justify-content: space-between; padding: 8px 5px; border-bottom: 1px solid #f0f0f0; align-items: center; }
+            td::before { content: attr(data-label); font-weight: bold; color: var(--primary-color); }
+            th { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>📖 جدول متابعة أوراد تسميع القرآن</h1>
+        <p>تحديد الورد اليومي التلقائي لكل طالب حسب التاريخ</p>
+    </header>
+
+    <!-- تحديد تاريخ المعاينة -->
+    <div class="date-picker-section">
+        <label for="viewDate">📅 عرض أوراد يوم:</label>
+        <input type="date" id="viewDate">
+    </div>
+
+    <!-- نموذج إضافة طالب -->
+    <div class="card">
+        <h3>➕ إضافة طالب جديد</h3>
+        <form id="addStudentForm" onsubmit="return false;">
+            <div class="form-group">
+                <div>
+                    <label for="studentName">اسم الطالب:</label>
+                    <input type="text" id="studentName" placeholder="مثال: أحمد محمد" required>
+                </div>
+                <div>
+                    <label for="startDate">تاريخ بدء الورد:</label>
+                    <input type="date" id="startDate" required>
+                </div>
+                <div>
+                    <label for="startPage">رقم أول صفحة (في تاريخ البدء):</label>
+                    <input type="number" id="startPage" value="1" min="1" max="604" required>
+                </div>
+                <div>
+                    <label for="pagesPerDay">عدد الصفحات اليومية:</label>
+                    <input type="number" id="pagesPerDay" value="3" min="1" max="50" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-add" id="btnAdd">حفظ الطالب</button>
+        </form>
+    </div>
+
+    <!-- قائمة الطلاب والأوراد -->
+    <div class="card">
+        <h3>📋 الورد المطلوب للتسميع</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>اسم الطالب</th>
+                    <th>معدل الإنجاز</th>
+                    <th>الورد المطلوب للتسميع اليوم</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="studentsList">
+            </tbody>
+        </table>
+
+        <!-- إمكانية التصدير والاسترجاع -->
+        <div class="backup-section">
+            <button type="button" class="btn-backup" onclick="exportData()">💾 تحميل نسخة احتياطية</button>
+            <button type="button" class="btn-backup" onclick="document.getElementById('importFile').click()">📂 استرجاع نسخة احتياطية</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        </div>
+    </div>
+</div>
+
+<script>
+    let students = [];
+
+    // استرجاع البيانات عند بدء التشغيل
+    function loadStudents() {
+        try {
+            const saved = localStorage.getItem('quran_students');
+            if (saved) {
+                students = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.log("تنبيه: التخزين الداخلي المحلي غير متاح أو مقيد في هذا المتصفح.");
+        }
+    }
+
+    // حفظ البيانات
+    function saveStudents() {
+        try {
+            localStorage.setItem('quran_students', JSON.stringify(students));
+        } catch (e) {
+            console.log("تعذر الحفظ في LocalStorage.");
+        }
+    }
+
+    function renderStudents() {
+        const tbody = document.getElementById('studentsList');
+        const viewDateVal = document.getElementById('viewDate').value;
+        tbody.innerHTML = '';
+
+        if (!students || students.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#777;">لا يوجد طلاب مسجلون حالياً. أضف طالباً من النموذج أعلاه.</td></tr>';
+            return;
+        }
+
+        // تحويل التاريخ لنفس التنسيق بدون فارق ساعات
+        const selectedDateParts = viewDateVal.split('-');
+        const selectedDate = new Date(selectedDateParts[0], selectedDateParts[1] - 1, selectedDateParts[2]);
+
+        students.forEach((student, index) => {
+            const startParts = student.startDate.split('-');
+            const startDate = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+
+            // حساب الفرق بالأيام بدقة
+            const diffTime = selectedDate - startDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            let pageText = '';
+
+            if (diffDays < 0) {
+                pageText = 'لم يبدأ بعد (التاريخ مستقبلي)';
+            } else {
+                const startP = parseInt(student.startPage);
+                const pPerDay = parseInt(student.pagesPerDay);
+
+                const fromPage = startP + (diffDays * pPerDay);
+                const toPage = fromPage + pPerDay - 1;
+
+                if (fromPage > 604) {
+                    pageText = 'أتم المصحف بحمد الله 🎉';
+                } else {
+                    const actualToPage = Math.min(toPage, 604);
+                    pageText = `الصفحات: من ${fromPage} إلى ${actualToPage}`;
+                }
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td data-label="اسم الطالب"><strong>${student.name}</strong></td>
+                <td data-label="معدل الإنجاز">${student.pagesPerDay} صفحات / يوم</td>
+                <td data-label="الورد المطلوب"><span class="badge">${pageText}</span></td>
+                <td data-label="إجراءات"><button class="btn-delete" onclick="deleteStudent(${index})">حذف</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function addStudent() {
+        const nameInput = document.getElementById('studentName');
+        const startDateInput = document.getElementById('startDate');
+        const startPageInput = document.getElementById('startPage');
+        const pagesPerDayInput = document.getElementById('pagesPerDay');
+
+        const name = nameInput.value.trim();
+        const startDate = startDateInput.value;
+        const startPage = parseInt(startPageInput.value);
+        const pagesPerDay = parseInt(pagesPerDayInput.value);
+
+        if (!name || !startDate || isNaN(startPage) || isNaN(pagesPerDay)) {
+            alert('يرجى ملء كافة البيانات بشكل صحيح');
+            return;
+        }
+
+        const newStudent = {
+            id: Date.now(),
+            name: name,
+            startDate: startDate,
+            startPage: startPage,
+            pagesPerDay: pagesPerDay
+        };
+
+        students.push(newStudent);
+        saveStudents();
+        renderStudents();
+
+        nameInput.value = '';
+    }
+
+    function deleteStudent(index) {
+        if (confirm('هل أنت تأكد من حذف هذا الطالب؟')) {
+            students.splice(index, 1);
+            saveStudents();
+            renderStudents();
+        }
+    }
+
+    // تصدير نسخة احتياطية
+    function exportData() {
+        if (students.length === 0) {
+            alert('لا توجد بيانات طلاب لتصديرها');
+            return;
+        }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(students));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "quran_students_backup.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    // استرجاع نسخة احتياطية
+    function importData(event) {
+        const fileReader = new FileReader();
+        fileReader.onload = function(e) {
+            try {
+                const importedStudents = JSON.parse(e.target.result);
+                if (Array.isArray(importedStudents)) {
+                    students = importedStudents;
+                    saveStudents();
+                    renderStudents();
+                    alert('تم استرجاع بيانات الطلاب بنجاح!');
+                } else {
+                    alert('الملف غير صالح');
+                }
+            } catch (err) {
+                alert('حدث خطأ أثناء قراءة الملف');
+            }
+        };
+        fileReader.readAsText(event.target.files[0]);
+    }
+
+    // تهيئة الصفحة عند التحميل
+    window.onload = function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('viewDate').value = today;
+        document.getElementById('startDate').value = today;
+
+        document.getElementById('viewDate').onchange = renderStudents;
+        document.getElementById('addStudentForm').onsubmit = function(e) {
+            e.preventDefault();
+            addStudent();
+        };
+
+        loadStudents();
+        renderStudents();
+    };
+</script>
+
+</body>
+</html>
