@@ -134,19 +134,14 @@
             width: auto;
         }
 
-        .backup-section {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .btn-backup {
-            background-color: #555;
+        .btn-reset {
+            background-color: #757575;
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 8px 12px;
             border-radius: 6px;
             cursor: pointer;
+            margin-top: 10px;
             font-size: 0.85rem;
         }
 
@@ -175,7 +170,7 @@
 
     <!-- نموذج إضافة طالب -->
     <div class="card">
-        <h3>➕ إضافة طالب جديد</h3>
+        <h3>➕ إضافة طالب جديد للمتصفح الحالي</h3>
         <form id="addStudentForm" onsubmit="return false;">
             <div class="form-group">
                 <div>
@@ -195,7 +190,7 @@
                     <input type="number" id="pagesPerDay" value="3" min="1" max="50" required>
                 </div>
             </div>
-            <button type="submit" class="btn-add" id="btnAdd">حفظ الطالب</button>
+            <button type="submit" class="btn-add" id="btnAdd">حفظ الطالب مؤقتاً</button>
         </form>
     </div>
 
@@ -214,37 +209,49 @@
             <tbody id="studentsList">
             </tbody>
         </table>
-
-        <!-- إمكانية التصدير والاسترجاع -->
-        <div class="backup-section">
-            <button type="button" class="btn-backup" onclick="exportData()">💾 تحميل نسخة احتياطية</button>
-            <button type="button" class="btn-backup" onclick="document.getElementById('importFile').click()">📂 استرجاع نسخة احتياطية</button>
-            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-        </div>
+        <button class="btn-reset" onclick="resetToDefault()">🔄 استعادة القائمة الأساسية للموقع</button>
     </div>
 </div>
 
 <script>
+    // -------------------------------------------------------------
+    //  قائمة الطلاب الأساسية المقيدة والمثبتة داخل الموقع
+    // يمكنك تعديل أو إضافة الطلاب هنا مباشرة لكي يظهروا للجميع على GitHub!
+    // -------------------------------------------------------------
+    const DEFAULT_STUDENTS = [
+        { id: 1, name: "أصالة", startDate: "2026-08-13", startPage: 311, pagesPerDay: 3 },
+        { id: 2, name: "وفاء", startDate: "2026-08-13", startPage: 360, pagesPerDay: 3 },
+    ];
+
     let students = [];
 
-    // استرجاع البيانات عند بدء التشغيل
     function loadStudents() {
         try {
             const saved = localStorage.getItem('quran_students');
             if (saved) {
                 students = JSON.parse(saved);
+            } else {
+                // إذا لم تكن هناك بيانات محفوظة محلياً، نستخدم القائمة الأساسية للموقع
+                students = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
             }
         } catch (e) {
-            console.log("تنبيه: التخزين الداخلي المحلي غير متاح أو مقيد في هذا المتصفح.");
+            students = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
         }
     }
 
-    // حفظ البيانات
     function saveStudents() {
         try {
             localStorage.setItem('quran_students', JSON.stringify(students));
         } catch (e) {
             console.log("تعذر الحفظ في LocalStorage.");
+        }
+    }
+
+    function resetToDefault() {
+        if (confirm("هل تريد استعادة قائمة الطلاب الأساسية والمثبتة في الموقع؟")) {
+            localStorage.removeItem('quran_students');
+            students = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
+            renderStudents();
         }
     }
 
@@ -254,11 +261,10 @@
         tbody.innerHTML = '';
 
         if (!students || students.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#777;">لا يوجد طلاب مسجلون حالياً. أضف طالباً من النموذج أعلاه.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#777;">لا يوجد طلاب حالياً. اضغط "استعادة القائمة الأساسية" للبدء.</td></tr>';
             return;
         }
 
-        // تحويل التاريخ لنفس التنسيق بدون فارق ساعات
         const selectedDateParts = viewDateVal.split('-');
         const selectedDate = new Date(selectedDateParts[0], selectedDateParts[1] - 1, selectedDateParts[2]);
 
@@ -266,7 +272,6 @@
             const startParts = student.startDate.split('-');
             const startDate = new Date(startParts[0], startParts[1] - 1, startParts[2]);
 
-            // حساب الفرق بالأيام بدقة
             const diffTime = selectedDate - startDate;
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
@@ -339,43 +344,6 @@
         }
     }
 
-    // تصدير نسخة احتياطية
-    function exportData() {
-        if (students.length === 0) {
-            alert('لا توجد بيانات طلاب لتصديرها');
-            return;
-        }
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(students));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", "quran_students_backup.json");
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-    }
-
-    // استرجاع نسخة احتياطية
-    function importData(event) {
-        const fileReader = new FileReader();
-        fileReader.onload = function(e) {
-            try {
-                const importedStudents = JSON.parse(e.target.result);
-                if (Array.isArray(importedStudents)) {
-                    students = importedStudents;
-                    saveStudents();
-                    renderStudents();
-                    alert('تم استرجاع بيانات الطلاب بنجاح!');
-                } else {
-                    alert('الملف غير صالح');
-                }
-            } catch (err) {
-                alert('حدث خطأ أثناء قراءة الملف');
-            }
-        };
-        fileReader.readAsText(event.target.files[0]);
-    }
-
-    // تهيئة الصفحة عند التحميل
     window.onload = function() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('viewDate').value = today;
