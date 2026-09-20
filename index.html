@@ -46,42 +46,6 @@
             margin-bottom: 20px;
         }
 
-        .form-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
-
-        input, button {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 0.95rem;
-        }
-
-        button.btn-add {
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        button.btn-add:hover {
-            background-color: var(--primary-color);
-        }
-
         .date-picker-section {
             display: flex;
             align-items: center;
@@ -97,6 +61,10 @@
 
         .date-picker-section input {
             max-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.95rem;
         }
 
         .display-date-banner {
@@ -189,32 +157,6 @@
     <div class="date-picker-section">
         <label for="viewDate">📅 حدد تاريخ المعاينة:</label>
         <input type="date" id="viewDate">
-    </div>
-
-    <!-- نموذج إضافة طالب -->
-    <div class="card">
-        <h3>➕ إضافة طالب جديد للمتصفح الحالي</h3>
-        <form id="addStudentForm" onsubmit="return false;">
-            <div class="form-group">
-                <div>
-                    <label for="studentName">اسم الطالب:</label>
-                    <input type="text" id="studentName" placeholder="مثال: أحمد محمد" required>
-                </div>
-                <div>
-                    <label for="startDate">تاريخ بدء الورد:</label>
-                    <input type="date" id="startDate" required>
-                </div>
-                <div>
-                    <label for="startPage">رقم أول صفحة (في تاريخ البدء):</label>
-                    <input type="number" id="startPage" value="1" min="1" max="604" required>
-                </div>
-                <div>
-                    <label for="pagesPerDay">عدد الصفحات اليومية:</label>
-                    <input type="number" id="pagesPerDay" value="3" min="1" max="50" required>
-                </div>
-            </div>
-            <button type="submit" class="btn-add" id="btnAdd">حفظ الطالب مؤقتاً</button>
-        </form>
     </div>
 
     <!-- قائمة الطلاب والأوراد -->
@@ -370,37 +312,6 @@
         });
     }
 
-    function addStudent() {
-        const nameInput = document.getElementById('studentName');
-        const startDateInput = document.getElementById('startDate');
-        const startPageInput = document.getElementById('startPage');
-        const pagesPerDayInput = document.getElementById('pagesPerDay');
-
-        const name = nameInput.value.trim();
-        const startDate = startDateInput.value;
-        const startPage = parseInt(startPageInput.value);
-        const pagesPerDay = parseInt(pagesPerDayInput.value);
-
-        if (!name || !startDate || isNaN(startPage) || isNaN(pagesPerDay)) {
-            alert('يرجى ملء كافة البيانات بشكل صحيح');
-            return;
-        }
-
-        const newStudent = {
-            id: Date.now(),
-            name: name,
-            startDate: startDate,
-            startPage: startPage,
-            pagesPerDay: pagesPerDay
-        };
-
-        students.push(newStudent);
-        saveStudents();
-        renderStudents();
-
-        nameInput.value = '';
-    }
-
     function deleteStudent(index) {
         if (confirm('هل أنت تأكد من حذف هذا الطالب؟')) {
             students.splice(index, 1);
@@ -412,13 +323,8 @@
     window.onload = function() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('viewDate').value = today;
-        document.getElementById('startDate').value = today;
 
         document.getElementById('viewDate').onchange = renderStudents;
-        document.getElementById('addStudentForm').onsubmit = function(e) {
-            e.preventDefault();
-            addStudent();
-        };
 
         loadStudents();
         renderStudents();
