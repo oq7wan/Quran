@@ -22,7 +22,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 950px;
             margin: 0 auto;
         }
 
@@ -138,6 +138,15 @@
             display: inline-block;
         }
 
+        .badge-review {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
         .btn-delete {
             background-color: #d32f2f;
             color: white;
@@ -215,13 +224,14 @@
             📌 أوراد التسميع ليوم: --
         </div>
 
-        <h3>📋 الورد المطلوب للتسميع</h3>
+        <h3>📋 الورد المطلوب للتسميع والمراجعة</h3>
         <table>
             <thead>
                 <tr>
                     <th>اسم الطالب</th>
                     <th>معدل الإنجاز</th>
-                    <th>الورد المطلوب للتسميع اليوم</th>
+                    <th>ورد التسميع اليومي</th>
+                    <th>ورد المراجعة (الجزء)</th>
                     <th>إجراءات</th>
                 </tr>
             </thead>
@@ -234,11 +244,19 @@
 
 <script>
     // -------------------------------------------------------------
-    //  قائمة الطلاب الأساسية المقيدة والمثبتة داخل الموقع
+    //  قائمة الطلاب الأساسية (تم ضبط وفاء لبدء الجزء 23 من تاريخ اليوم)
     // -------------------------------------------------------------
     const DEFAULT_STUDENTS = [
-        { id: 1, name: "أصالة", startDate: "2026-09-5", startPage: 322, pagesPerDay: 3 },
-        { id: 2, name: "وفاء", startDate: "2026-08-13", startPage: 360, pagesPerDay: 3 },
+        { id: 1, name: "أصالة", startDate: "2026-09-05", startPage: 322, pagesPerDay: 3 },
+        { 
+            id: 2, 
+            name: "وفاء", 
+            startDate: "2026-08-13", 
+            startPage: 360, 
+            pagesPerDay: 3, 
+            initialJuz: 23, 
+            startJuzDate: "2026-09-20" // يبدأ الجزء 23 من اليوم
+        },
     ];
 
     let students = [];
@@ -277,11 +295,8 @@
         if (parts.length === 3) {
             const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
             
-            // تنسيق التاريخ الميلادي (مثال: الخميس، 13 أغسطس 2026)
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             const dateStr = selectedDate.toLocaleDateString('ar-EG', options);
-            
-            // إضافة التاريخ بالصيغة الرقمية المباشرة (13/8/2026)
             const formattedNumeric = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
             document.getElementById('currentDateBanner').innerHTML = `📌 أوراد التسميع ليوم: <strong>${dateStr}</strong> (${formattedNumeric})`;
@@ -293,11 +308,10 @@
         const viewDateVal = document.getElementById('viewDate').value;
         tbody.innerHTML = '';
 
-        // تحديث نص التاريخ فوق الجدول
         updateDateBanner(viewDateVal);
 
         if (!students || students.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#777;">لا يوجد طلاب حالياً. اضغط "استعادة القائمة الأساسية" للبدء.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777;">لا يوجد طلاب حالياً. اضغط "استعادة القائمة الأساسية" للبدء.</td></tr>';
             return;
         }
 
@@ -305,28 +319,42 @@
         const selectedDate = new Date(selectedDateParts[0], selectedDateParts[1] - 1, selectedDateParts[2]);
 
         students.forEach((student, index) => {
+            // حساب ورد التسميع (الصفحات)
             const startParts = student.startDate.split('-');
             const startDate = new Date(startParts[0], startParts[1] - 1, startParts[2]);
-
             const diffTime = selectedDate - startDate;
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
             let pageText = '';
-
             if (diffDays < 0) {
-                pageText = 'لم يبدأ بعد (التاريخ مستقبلي)';
+                pageText = 'لم يبدأ بعد';
             } else {
                 const startP = parseInt(student.startPage);
                 const pPerDay = parseInt(student.pagesPerDay);
-
                 const fromPage = startP + (diffDays * pPerDay);
                 const toPage = fromPage + pPerDay - 1;
 
                 if (fromPage > 604) {
-                    pageText = 'أتم المصحف بحمد الله 🎉';
+                    pageText = 'أتم المصحف 🎉';
                 } else {
                     const actualToPage = Math.min(toPage, 604);
-                    pageText = `الصفحات: من ${fromPage} إلى ${actualToPage}`;
+                    pageText = `الصفحات: ${fromPage} - ${actualToPage}`;
+                }
+            }
+
+            // حساب ورد المراجعة (الأجزاء) - للطالبة وفاء أو من ينطبق عليه
+            let reviewText = '—';
+            if (student.initialJuz && student.startJuzDate) {
+                const juzStartParts = student.startJuzDate.split('-');
+                const juzStartDate = new Date(juzStartParts[0], juzStartParts[1] - 1, juzStartParts[2]);
+                const juzDiffDays = Math.floor((selectedDate - juzStartDate) / (1000 * 60 * 60 * 24));
+
+                if (juzDiffDays >= 0) {
+                    // حساب رقم الجزء مع تدوير من 1 إلى 30
+                    let currentJuz = (student.initialJuz - 1 + juzDiffDays) % 30 + 1;
+                    reviewText = `الجزء رقم (${currentJuz})`;
+                } else {
+                    reviewText = 'لم تبدأ المراجعة بعد';
                 }
             }
 
@@ -334,7 +362,8 @@
             tr.innerHTML = `
                 <td data-label="اسم الطالب"><strong>${student.name}</strong></td>
                 <td data-label="معدل الإنجاز">${student.pagesPerDay} صفحات / يوم</td>
-                <td data-label="الورد المطلوب"><span class="badge">${pageText}</span></td>
+                <td data-label="ورد التسميع"><span class="badge">${pageText}</span></td>
+                <td data-label="ورد المراجعة"><span class="${student.initialJuz ? 'badge-review' : ''}">${reviewText}</span></td>
                 <td data-label="إجراءات"><button class="btn-delete" onclick="deleteStudent(${index})">حذف</button></td>
             `;
             tbody.appendChild(tr);
