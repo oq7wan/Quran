@@ -172,9 +172,9 @@
 </div>
 
 <script>
-    // -------------------------------------------------------------
-    //  قائمة الطلاب الأساسية (تشمل ورد البقرة لأصالة ووفاء)
-    // -------------------------------------------------------------
+    // الأجزاء المحفوظة الخاصة بمراجعة وفاء: (1 إلى 4) ثم (19 إلى 30)
+    const WAFAA_SAVED_JUZ = [1, 2, 3, 4, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
+
     const DEFAULT_STUDENTS = [
         { 
             id: 1, 
@@ -182,7 +182,7 @@
             startDate: "2026-09-05", 
             startPage: 322, 
             pagesPerDay: 3,
-            startBaqarahDate: "2026-09-30" // تاريخ بداية دورة البقرة
+            startBaqarahDate: "2026-09-30" 
         },
         { 
             id: 2, 
@@ -192,7 +192,8 @@
             pagesPerDay: 3, 
             initialJuz: 23, 
             startJuzDate: "2026-09-20",
-            startBaqarahDate: "2026-09-30" // تاريخ بداية دورة البقرة
+            startBaqarahDate: "2026-09-30",
+            customJuzList: WAFAA_SAVED_JUZ
         },
     ];
 
@@ -257,7 +258,7 @@
                 }
             }
 
-            // 2. حساب ورد المراجعة (الأجزاء) - للطالبة وفاء
+            // 2. حساب ورد المراجعة (الأجزاء)
             let reviewText = '—';
             if (student.initialJuz && student.startJuzDate) {
                 const juzStartParts = student.startJuzDate.split('-');
@@ -265,8 +266,18 @@
                 const juzDiffDays = Math.floor((selectedDate - juzStartDate) / (1000 * 60 * 60 * 24));
 
                 if (juzDiffDays >= 0) {
-                    let currentJuz = (student.initialJuz - 1 + juzDiffDays) % 30 + 1;
-                    reviewText = `الجزء رقم (${currentJuz})`;
+                    if (student.customJuzList && student.customJuzList.length > 0) {
+                        // موقع البداية في قائمة الأجزاء المخصصة (مثلاً الجزء 23)
+                        const startIdx = student.customJuzList.indexOf(student.initialJuz);
+                        const baseIdx = startIdx !== -1 ? startIdx : 0;
+                        const currentIdx = (baseIdx + juzDiffDays) % student.customJuzList.length;
+                        const currentJuz = student.customJuzList[currentIdx];
+                        reviewText = `الجزء رقم (${currentJuz})`;
+                    } else {
+                        // المراجعة الافتراضية كاملة 1-30
+                        let currentJuz = (student.initialJuz - 1 + juzDiffDays) % 30 + 1;
+                        reviewText = `الجزء رقم (${currentJuz})`;
+                    }
                 } else {
                     reviewText = 'لم تبدأ المراجعة بعد';
                 }
