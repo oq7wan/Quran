@@ -22,7 +22,7 @@
         }
 
         .container {
-            max-width: 950px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -115,6 +115,15 @@
             display: inline-block;
         }
 
+        .badge-baqarah {
+            background-color: #fff3e0;
+            color: #e65100;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
         .btn-delete {
             background-color: #d32f2f;
             color: white;
@@ -174,6 +183,7 @@
                     <th>معدل الإنجاز</th>
                     <th>ورد التسميع اليومي</th>
                     <th>ورد المراجعة (الجزء)</th>
+                    <th>ورد سورة البقرة</th>
                     <th>إجراءات</th>
                 </tr>
             </thead>
@@ -186,10 +196,17 @@
 
 <script>
     // -------------------------------------------------------------
-    //  قائمة الطلاب الأساسية (تم ضبط وفاء لبدء الجزء 23 من تاريخ اليوم)
+    //  قائمة الطلاب الأساسية (تشمل ورد البقرة لأصالة ووفاء)
     // -------------------------------------------------------------
     const DEFAULT_STUDENTS = [
-        { id: 1, name: "أصالة", startDate: "2026-09-05", startPage: 322, pagesPerDay: 3 },
+        { 
+            id: 1, 
+            name: "أصالة", 
+            startDate: "2026-09-05", 
+            startPage: 322, 
+            pagesPerDay: 3,
+            startBaqarahDate: "2026-09-30" // تاريخ بداية دورة البقرة
+        },
         { 
             id: 2, 
             name: "وفاء", 
@@ -197,8 +214,18 @@
             startPage: 360, 
             pagesPerDay: 3, 
             initialJuz: 23, 
-            startJuzDate: "2026-09-20" // يبدأ الجزء 23 من اليوم
+            startJuzDate: "2026-09-20",
+            startBaqarahDate: "2026-09-30" // تاريخ بداية دورة البقرة
         },
+    ];
+
+    // جدول تقسيم سورة البقرة على 5 أيام
+    const BAQARAH_SCHEDULE = [
+        "من صفحة 2 إلى 11",   // اليوم الأول (الجدول يبدأ من الفهرس 0)
+        "من صفحة 12 إلى 21",  // اليوم الثاني
+        "من صفحة 22 إلى 31",  // اليوم الثالث
+        "من صفحة 32 إلى 41",  // اليوم الرابع
+        "من صفحة 42 إلى 49"   // اليوم الخامس
     ];
 
     let students = [];
@@ -253,7 +280,7 @@
         updateDateBanner(viewDateVal);
 
         if (!students || students.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777;">لا يوجد طلاب حالياً. اضغط "استعادة القائمة الأساسية" للبدء.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777;">لا يوجد طلاب حالياً. اضغط "استعادة القائمة الأساسية" للبدء.</td></tr>';
             return;
         }
 
@@ -261,7 +288,7 @@
         const selectedDate = new Date(selectedDateParts[0], selectedDateParts[1] - 1, selectedDateParts[2]);
 
         students.forEach((student, index) => {
-            // حساب ورد التسميع (الصفحات)
+            // 1. حساب ورد التسميع (الصفحات)
             const startParts = student.startDate.split('-');
             const startDate = new Date(startParts[0], startParts[1] - 1, startParts[2]);
             const diffTime = selectedDate - startDate;
@@ -284,7 +311,7 @@
                 }
             }
 
-            // حساب ورد المراجعة (الأجزاء) - للطالبة وفاء أو من ينطبق عليه
+            // 2. حساب ورد المراجعة (الأجزاء) - للطالبة وفاء
             let reviewText = '—';
             if (student.initialJuz && student.startJuzDate) {
                 const juzStartParts = student.startJuzDate.split('-');
@@ -292,11 +319,25 @@
                 const juzDiffDays = Math.floor((selectedDate - juzStartDate) / (1000 * 60 * 60 * 24));
 
                 if (juzDiffDays >= 0) {
-                    // حساب رقم الجزء مع تدوير من 1 إلى 30
                     let currentJuz = (student.initialJuz - 1 + juzDiffDays) % 30 + 1;
                     reviewText = `الجزء رقم (${currentJuz})`;
                 } else {
                     reviewText = 'لم تبدأ المراجعة بعد';
+                }
+            }
+
+            // 3. حساب ورد سورة البقرة (تكرار كل 5 أيام)
+            let baqarahText = '—';
+            if (student.startBaqarahDate) {
+                const baqStartParts = student.startBaqarahDate.split('-');
+                const baqStartDate = new Date(baqStartParts[0], baqStartParts[1] - 1, baqStartParts[2]);
+                const baqDiffDays = Math.floor((selectedDate - baqStartDate) / (1000 * 60 * 60 * 24));
+
+                if (baqDiffDays >= 0) {
+                    const dayIndex = baqDiffDays % 5; // دورة من 5 أيام (0, 1, 2, 3, 4)
+                    baqarahText = BAQARAH_SCHEDULE[dayIndex];
+                } else {
+                    baqarahText = 'لم يبدأ بعد';
                 }
             }
 
@@ -306,6 +347,7 @@
                 <td data-label="معدل الإنجاز">${student.pagesPerDay} صفحات / يوم</td>
                 <td data-label="ورد التسميع"><span class="badge">${pageText}</span></td>
                 <td data-label="ورد المراجعة"><span class="${student.initialJuz ? 'badge-review' : ''}">${reviewText}</span></td>
+                <td data-label="ورد البقرة"><span class="badge-baqarah">${baqarahText}</span></td>
                 <td data-label="إجراءات"><button class="btn-delete" onclick="deleteStudent(${index})">حذف</button></td>
             `;
             tbody.appendChild(tr);
