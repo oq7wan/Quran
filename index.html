@@ -124,27 +124,6 @@
             display: inline-block;
         }
 
-        .btn-delete {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            width: auto;
-        }
-
-        .btn-reset {
-            background-color: #757575;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 10px;
-            font-size: 0.85rem;
-        }
-
         @media (max-width: 600px) {
             table, thead, tbody, th, td, tr { display: block; }
             tr { margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: white; }
@@ -184,13 +163,11 @@
                     <th>ورد التسميع اليومي</th>
                     <th>ورد المراجعة (الجزء)</th>
                     <th>ورد سورة البقرة</th>
-                    <th>إجراءات</th>
                 </tr>
             </thead>
             <tbody id="studentsList">
             </tbody>
         </table>
-        <button class="btn-reset" onclick="resetToDefault()">🔄 استعادة القائمة الأساسية للموقع</button>
     </div>
 </div>
 
@@ -221,43 +198,12 @@
 
     // جدول تقسيم سورة البقرة على 5 أيام
     const BAQARAH_SCHEDULE = [
-        "من صفحة 2 إلى 11",   // اليوم الأول (الجدول يبدأ من الفهرس 0)
+        "من صفحة 2 إلى 11",   // اليوم الأول
         "من صفحة 12 إلى 21",  // اليوم الثاني
         "من صفحة 22 إلى 31",  // اليوم الثالث
         "من صفحة 32 إلى 41",  // اليوم الرابع
         "من صفحة 42 إلى 49"   // اليوم الخامس
     ];
-
-    let students = [];
-
-    function loadStudents() {
-        try {
-            const saved = localStorage.getItem('quran_students');
-            if (saved) {
-                students = JSON.parse(saved);
-            } else {
-                students = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
-            }
-        } catch (e) {
-            students = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
-        }
-    }
-
-    function saveStudents() {
-        try {
-            localStorage.setItem('quran_students', JSON.stringify(students));
-        } catch (e) {
-            console.log("تعذر الحفظ في LocalStorage.");
-        }
-    }
-
-    function resetToDefault() {
-        if (confirm("هل تريد استعادة قائمة الطلاب الأساسية والمثبتة في الموقع؟")) {
-            localStorage.removeItem('quran_students');
-            students = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
-            renderStudents();
-        }
-    }
 
     function updateDateBanner(viewDateVal) {
         const parts = viewDateVal.split('-');
@@ -279,15 +225,15 @@
 
         updateDateBanner(viewDateVal);
 
-        if (!students || students.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#777;">لا يوجد طلاب حالياً. اضغط "استعادة القائمة الأساسية" للبدء.</td></tr>';
+        if (!DEFAULT_STUDENTS || DEFAULT_STUDENTS.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777;">لا يوجد طلاب حالياً.</td></tr>';
             return;
         }
 
         const selectedDateParts = viewDateVal.split('-');
         const selectedDate = new Date(selectedDateParts[0], selectedDateParts[1] - 1, selectedDateParts[2]);
 
-        students.forEach((student, index) => {
+        DEFAULT_STUDENTS.forEach((student) => {
             // 1. حساب ورد التسميع (الصفحات)
             const startParts = student.startDate.split('-');
             const startDate = new Date(startParts[0], startParts[1] - 1, startParts[2]);
@@ -334,7 +280,7 @@
                 const baqDiffDays = Math.floor((selectedDate - baqStartDate) / (1000 * 60 * 60 * 24));
 
                 if (baqDiffDays >= 0) {
-                    const dayIndex = baqDiffDays % 5; // دورة من 5 أيام (0, 1, 2, 3, 4)
+                    const dayIndex = baqDiffDays % 5;
                     baqarahText = BAQARAH_SCHEDULE[dayIndex];
                 } else {
                     baqarahText = 'لم يبدأ بعد';
@@ -348,18 +294,9 @@
                 <td data-label="ورد التسميع"><span class="badge">${pageText}</span></td>
                 <td data-label="ورد المراجعة"><span class="${student.initialJuz ? 'badge-review' : ''}">${reviewText}</span></td>
                 <td data-label="ورد البقرة"><span class="badge-baqarah">${baqarahText}</span></td>
-                <td data-label="إجراءات"><button class="btn-delete" onclick="deleteStudent(${index})">حذف</button></td>
             `;
             tbody.appendChild(tr);
         });
-    }
-
-    function deleteStudent(index) {
-        if (confirm('هل أنت تأكد من حذف هذا الطالب؟')) {
-            students.splice(index, 1);
-            saveStudents();
-            renderStudents();
-        }
     }
 
     window.onload = function() {
@@ -368,7 +305,6 @@
 
         document.getElementById('viewDate').onchange = renderStudents;
 
-        loadStudents();
         renderStudents();
     };
 </script>
