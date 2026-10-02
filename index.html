@@ -172,8 +172,8 @@
 </div>
 
 <script>
-    // الأجزاء المحفوظة الخاصة بمراجعة وفاء: (1 إلى 4) ثم (19 إلى 30)
-    const WAFAA_SAVED_JUZ = [1, 2, 3, 4, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
+    // الأجزاء المحفوظة الخاصة بمراجعة وفاء: من الجزء 19 إلى الجزء 30 فقط
+    const WAFAA_SAVED_JUZ = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
 
     const DEFAULT_STUDENTS = [
         { 
@@ -267,7 +267,7 @@
 
                 if (juzDiffDays >= 0) {
                     if (student.customJuzList && student.customJuzList.length > 0) {
-                        // موقع البداية في قائمة الأجزاء المخصصة (مثلاً الجزء 23)
+                        // موقع البداية في قائمة الأجزاء المخصصة (الجزء 23)
                         const startIdx = student.customJuzList.indexOf(student.initialJuz);
                         const baseIdx = startIdx !== -1 ? startIdx : 0;
                         const currentIdx = (baseIdx + juzDiffDays) % student.customJuzList.length;
