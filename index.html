@@ -172,15 +172,15 @@
 </div>
 
 <script>
-    // الأجزاء المحفوظة الخاصة بمراجعة وفاء: من الجزء 19 إلى الجزء 30 فقط
-    const WAFAA_SAVED_JUZ = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
+    // سلسلة الأجزاء الخاصة بمراجعة وفاء: من 19 إلى 30، ثم الجزء 4، ثم الجزء 15
+    const WAFAA_SAVED_JUZ = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 4, 15];
 
     const DEFAULT_STUDENTS = [
         { 
             id: 1, 
             name: "أصالة", 
-            startDate: "2026-10-14", 
-            startPage: 335, 
+            startDate: "2026-09-05", 
+            startPage: 322, 
             pagesPerDay: 3,
             startBaqarahDate: "2026-09-30" 
         },
@@ -267,7 +267,7 @@
 
                 if (juzDiffDays >= 0) {
                     if (student.customJuzList && student.customJuzList.length > 0) {
-                        // موقع البداية في قائمة الأجزاء المخصصة (الجزء 23)
+                        // تحديد موقع البداية داخل المصفوفة المخصصة (الجزء 23)
                         const startIdx = student.customJuzList.indexOf(student.initialJuz);
                         const baseIdx = startIdx !== -1 ? startIdx : 0;
                         const currentIdx = (baseIdx + juzDiffDays) % student.customJuzList.length;
