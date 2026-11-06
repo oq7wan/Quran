@@ -172,7 +172,7 @@
 </div>
 
 <script>
-    // مصفوفة المراجعة الخاصة بوفاء: الجزء 30 أولاً (اليوم)، ثم 4 (غداً)، ثم 15 (بعد غد)، ثم من 19 إلى 30
+    // مصفوفة المراجعة الخاصة بوفاء
     const WAFAA_SAVED_JUZ = [30, 4, 15, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
 
     const DEFAULT_STUDENTS = [
@@ -191,7 +191,7 @@
             startPage: 360, 
             pagesPerDay: 3, 
             initialJuz: 30, 
-            startJuzDate: "2026-10-21", // ضبط بداية الجزء 30 لتكون اليوم الأربعاء 21-10-2026
+            startJuzDate: "2026-10-21", 
             startBaqarahDate: "2026-09-30",
             customJuzList: WAFAA_SAVED_JUZ
         },
@@ -199,24 +199,82 @@
 
     // جدول تقسيم سورة البقرة على 5 أيام
     const BAQARAH_SCHEDULE = [
-        "من صفحة 2 إلى 11",   // اليوم الأول
-        "من صفحة 12 إلى 21",  // اليوم الثاني
-        "من صفحة 22 إلى 31",  // اليوم الثالث
-        "من صفحة 32 إلى 41",  // اليوم الرابع
-        "من صفحة 42 إلى 49"   // اليوم الخامس
+        "من صفحة 2 إلى 11",   
+        "من صفحة 12 إلى 21",  
+        "من صفحة 22 إلى 31",  
+        "من صفحة 32 إلى 41",  
+        "من صفحة 42 إلى 49"   
     ];
 
     function updateDateBanner(viewDateVal) {
         const parts = viewDateVal.split('-');
         if (parts.length === 3) {
             const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
-            
+
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             const dateStr = selectedDate.toLocaleDateString('ar-EG', options);
             const formattedNumeric = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
             document.getElementById('currentDateBanner').innerHTML = `📌 أوراد التسميع ليوم: <strong>${dateStr}</strong> (${formattedNumeric})`;
         }
+    }
+
+    // دالة مساعدة لحساب الصفحة بناءً على نظام النطاقات المتتابعة المطلوبة
+    function getPageForDay(diffDays, startPage, pagesPerDay) {
+        // بناء النطاقات المترابطة التي تمثل الدورة الكاملة للمصحف بالطريقة المطلوبة:
+        // 1) من startPage حتى 604
+        // 2) من 1 حتى 80
+        // 3) من 360 حتى 604
+        // (يمكن تكرار هذه الدورة بناءً على عدد الأيام المنقضية)
+        
+        let ranges = [];
+        
+        // النطاق الأول: من نقطة بداية الطالب الأساسية إلى 604
+        if (startPage <= 604) {
+            ranges.push({ from: startPage, to: 604 });
+        }
+        
+        // النطاق الثاني: من 1 إلى 80
+        ranges.push({ from: 1, to: 80 });
+        
+        // النطاق الثالث: من 360 إلى 604
+        ranges.push({ from: 360, to: 604 });
+
+        // حساب إجمالي عدد الصفحات في الدورة الواحدة كاملة
+        let totalCyclePages = 0;
+        let rangeDetails = ranges.map(r => {
+            let count = (r.to - r.from + 1);
+            let startOffset = totalCyclePages;
+            totalCyclePages += count;
+            return { from: r.from, to: r.to, count: count, startOffset: startOffset };
+        });
+
+        // معرفة موقع اليوم الحالي داخل الدورة (بأخذ باقي القسمة على إجمالي صفحات الدورة موزعة على عدد الصفحات اليومية)
+        // وبما أننا نتعامل بعدد الأيام، نحسب إجمالي عدد الصفحات المقروءة منذ البداية:
+        let totalPagesReadSoFar = diffDays * pagesPerDay;
+        
+        // لتكرار الدورات بشكل صحيح بناءً على عدد الأيام الكلي:
+        // نحسب عدد صفحات الدورة الكلية (محسوبة باليوم؟ لا، الأفضل حسابها بالأيام أو تراكمياً):
+        // فلنقم بتوليد قائمة كاملة بالصفحات يوماً بيوم أو بحساب الإزاحة في الدورة:
+        
+        // طريقة أدق: حساب كم صفحة في الدورة الواحدة (بالأيام المقطوعة):
+        let totalCycleDays = Math.ceil(totalCyclePages / pagesPerDay);
+        let dayInCycle = diffDays % totalCycleDays;
+        let effectivePagesFromStart = dayInCycle * pagesPerDay;
+
+        // تحديد في أي نطاق تقع هذه الصفحات المتراكمة داخل الدورة
+        for (let rd of rangeDetails) {
+            if (effectivePagesFromStart >= rd.startOffset && effectivePagesFromStart < rd.startOffset + rd.count) {
+                let offsetInThisRange = effectivePagesFromStart - rd.startOffset;
+                let fromPage = rd.from + offsetInThisRange;
+                let toPage = Math.min(fromPage + pagesPerDay - 1, rd.to);
+                // لو تجاوزت نهاية النطاق الحالي بسبب كسر الصفحات، نقوم بقصها أو التعامل معها
+                return { from: fromPage, to: toPage };
+            }
+        }
+        
+        // كاحتياط لو حدث أي تجاوز
+        return { from: ranges[0].from, to: Math.min(ranges[0].from + pagesPerDay - 1, ranges[0].to) };
     }
 
     function renderStudents() {
@@ -247,15 +305,9 @@
             } else {
                 const startP = parseInt(student.startPage);
                 const pPerDay = parseInt(student.pagesPerDay);
-                const fromPage = startP + (diffDays * pPerDay);
-                const toPage = fromPage + pPerDay - 1;
-
-                if (fromPage > 604) {
-                    pageText = 'أتم المصحف 🎉';
-                } else {
-                    const actualToPage = Math.min(toPage, 604);
-                    pageText = `الصفحات: ${fromPage} - ${actualToPage}`;
-                }
+                
+                const pageRange = getPageForDay(diffDays, startP, pPerDay);
+                pageText = `الصفحات: ${pageRange.from} - ${pageRange.to}`;
             }
 
             // 2. حساب ورد المراجعة (الأجزاء)
